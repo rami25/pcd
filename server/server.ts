@@ -13,7 +13,7 @@ export async function createServer(logRequests = true) {
     if(logRequests) app.use(loggerMiddleware)
 
     app.use('/api/pcd0/admin',   require('./src/routes/adminRoute'))
-    app.use('/api/pcd0/client',  require('./src/routes/clientnRoute'))
+    app.use('/api/pcd0/client',  require('./src/routes/clientRoute'))
 
     app.use(errHandler)
     return app

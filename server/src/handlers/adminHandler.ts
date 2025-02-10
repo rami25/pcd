@@ -3,17 +3,56 @@ import {
         ResetPasswordResponse,
         AdminSignInRequest, 
         AdminSignInResponse, 
-        SignOutRequest, 
-        SignOutResponse, 
-        WithdrawRequest,
-        WithdrawResponse
+        AdminSignUpRequest, 
+        AdminSignUpResponse, 
+        SignOutRequestByPId, 
+        SignOutResponseByPId,
+        SignOutRequestByCardId, 
+        SignOutResponseByCardId, 
+        WithdrawRequestByPId,
+        WithdrawResponseByPId,
+        WithdrawRequestByCardId,
+        WithdrawResponseByCardId
 } from '../../../shared/src/APIs/api'
+import { ERRORS } from '../../../shared/src/errors'
 import { ExpressHandler, ExpressHandlerWithParams } from "../types"
 import { db } from '../dao';
 import { signJwt } from '../auth'
 import { hashPassword } from '../env';
 import { ObjectId } from '../../../shared/src/connection';
-import { Client } from '../../../shared/src/types/Client'
+import { Admin } from '../../../shared/src/types/Admin'
+
+
+export const signUpHandler : ExpressHandler<
+AdminSignUpRequest,
+AdminSignUpResponse
+> = async (req, res) => {
+    const { name, email , password } = req.body
+    if(!name || !email || !password){
+        return res.status(400).send({error:'all fields are required'})
+    }
+    if (await db.getAdminByName(name)) {
+        return res.status(403).send({ error: ERRORS.DUPLICATE_USERNAME });
+    }
+    if (await db.getAdminByEmail(email)) {
+        return res.status(403).send({ error: ERRORS.DUPLICATE_EMAIL });
+    }
+    const newAdmin: Admin = {
+        name,
+        email,
+        password : hashPassword(password)
+    }
+    const admin = await db.createAdmin(newAdmin)
+    const jwt = signJwt({adminId : admin!._id!})
+    res.cookie('jwt', jwt);
+    res.status(200).send({
+        admin: {
+            _id: admin!._id,
+        },
+        jwt,
+    })    
+}
+
 
 export const signInHandler : ExpressHandler<
 AdminSignInRequest,
@@ -38,18 +77,35 @@ AdminSignInResponse
     })    
 }
 
-export const withdrawHandler : ExpressHandler<
-WithdrawRequest,
-WithdrawResponse
+export const withdrawHandlerByPId : ExpressHandler<
+WithdrawRequestByPId,
+WithdrawResponseByPId
 > = async (req, res) => {
-    const { faceId , fees } = req.body
-    if(!faceId || !fees){
+    const { personId , fees } = req.body
+    if(!personId || !fees){
         return res.status(400).send({error:'all fields are required'})
     }
-    const existing = await db.getClientByFaceId(faceId);
+    const existing = await db.getClientByPersonId(personId);
     if(!existing) {
-        return res.status(403).send({error: 'unauthorized'})
+        return res.status(403).send({error: 'Client not found'})
     }
+    await db.withdraw(new ObjectId(existing._id), fees)
+    res.status(200).send({ message: 'done'})    
+}
+
+export const withdrawHandlerByCardId : ExpressHandler<
+WithdrawRequestByCardId,
+WithdrawResponseByCardId
+> = async (req, res) => {
+    const { cardId , fees } = req.body
+    if(!cardId || !fees){
+        return res.status(400).send({error:'all fields are required'})
+    }
+    const existing = await db.getClientByCardId(cardId);
+    if(!existing) {
+        return res.status(403).send({error: 'Client not found'})
+    }
+    await db.withdraw(new ObjectId(existing._id), fees)
     res.status(200).send({ message: 'done'})    
 }
 
@@ -57,29 +113,50 @@ export const countClientHandler : ExpressHandler<{},{clients: number}> = async(r
     res.status(200).send({clients : await db.countClients()})
 }
 
-export const getClientHandler : ExpressHandler<any,{client:Client}> = async (req, res) => {
-    const { faceId } = req.body
-    const client = await db.getClientByFaceId(faceId)
-    if(client) {
-        return res.status(200).send({client})
+// export const getClientHandler : ExpressHandler<any,{client:Client}> = async (req, res) => {
+//     const { personId } = req.body
+//     const client = await db.getClientByPersonId(personId)
+//     if(client) {
+//         return res.status(200).send({client})
+//     } else {
+//         res.sendStatus(404)    
+//     }
+// }
+
+export const deleteClientHandlerByPId : ExpressHandler<
+SignOutRequestByPId,
+SignOutResponseByPId
+> = async (req, res) => {
+    const adminId = res.locals.adminId
+    const { personId } = req.body;
+    if(adminId) {
+        if(personId){
+            const client = await db.getClientByPersonId(personId)
+            if(!client)
+                return res.status(400).send({error:'Client not found'})
+            await db.deleteClient(new ObjectId(client._id))
+            return res.status(200).send({message :'Client deleted successfully!'})
+        } else {
+            return res.status(401);
+        }
     } else {
-        res.sendStatus(404)    
+        return res.status(403).send({error: 'unauthorized'})
     }
 }
 
-export const deleteClientHandler : ExpressHandler<
-SignOutRequest,
-SignOutResponse
+export const deleteClientHandlerByCardId : ExpressHandler<
+SignOutRequestByCardId,
+SignOutResponseByCardId
 > = async (req, res) => {
     const adminId = res.locals.adminId
-    const { clientId } = req.body;
+    const { cardId } = req.body;
     if(adminId) {
-        if(clientId){
-            const client = await db.getClientById(new ObjectId(clientId))
+        if(cardId){
+            const client = await db.getClientByCardId(cardId)
             if(!client)
-                return res.status(400).send({error:'User not authorized to deleting this post'})
-            await db.deleteClient(new ObjectId(clientId))
-            return res.status(200).send({message :'Post deleted successfully!'})
+                return res.status(400).send({error:'Client not found'})
+            await db.deleteClient(new ObjectId(client._id))
+            return res.status(200).send({message :'Client deleted successfully!'})
         } else {
             return res.status(401);
         }

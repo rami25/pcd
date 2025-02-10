@@ -11,8 +11,8 @@ export const signClientHandler : ExpressHandler<
 SignRequest,
 SignResponse
 > = async (req, res) => {
-    const { name , cardId , faceId } = req.body
-    if(!name || !cardId || !faceId)
+    const { name , cardId , personId } = req.body
+    if(!name || !cardId || !personId)
         return res.sendStatus(400)
 
     if (await db.getClientByName(name)) {
@@ -21,7 +21,7 @@ SignResponse
     const newClient : Client = {
         name,
         cardId,
-        faceId
+        personId
     }    
     await db.createClient(newClient)
     res.status(200).send({ message : 'Client Was Signed Successfully' });

@@ -18,17 +18,28 @@ export class MongoDB implements DataStore {
     async getClientById(id: Types.ObjectId): Promise<Client | undefined> {
         return await ClientM.findOne().where("_id").equals(id) || undefined
     }
-    async getClientByFaceId(id: string): Promise<Client | undefined> {
-        return await ClientM.findOne().where("faceId").equals(id) || undefined
+    async getClientByPersonId(personId: string): Promise<Client | undefined> {
+        return await ClientM.findOne().where("personId").equals(personId) || undefined
+    }
+    async getClientByCardId(cardId: string): Promise<Client | undefined> {
+        return await ClientM.findOne().where("cardId").equals(cardId) || undefined
     }
     async getClientByName(name: string): Promise<Client | undefined> {
         return await ClientM.findOne().where("name").equals(name) || undefined
+    }
+    async withdraw(id: Types.ObjectId, fees : number): Promise<void> {
+        //let client = await ClientM.updateOne().where("_id").equals(id) || undefined
+        await ClientM.updateOne({_id : id}, { $inc : {amount : -fees}})
     }
     async countClients(): Promise<number> {
         return await ClientM.countDocuments()
     }
 
-
+    async createAdmin(admin: Admin): Promise<Admin | undefined> {
+        const newAdmin = await AdminM.create(admin)
+        await newAdmin.save()
+        return newAdmin
+    }
     async getAdminById(id: Types.ObjectId): Promise<Admin | undefined> {
         return await AdminM.findOne().where("_id").equals(id) || undefined
     }

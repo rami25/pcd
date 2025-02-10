@@ -4,7 +4,8 @@ export interface Client {
     _id?: Types.ObjectId;
     name?: string
     cardId : string;
-    faceId: string;
+    personId: string;
+    amount? : number;
 }
 const clientSchema = new Schema<Client>({
     name : {
@@ -15,10 +16,14 @@ const clientSchema = new Schema<Client>({
         type : String,
         required : true
     },
-    faceId : {
+    personId : {
         type : String,
         required : true
     },
+    amount : {
+        type : Number,
+        default : 1000
+    }
 })
 const ClientM = model<Client>('ClientM', clientSchema)
 export default ClientM

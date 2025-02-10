@@ -1,14 +1,20 @@
 import asyncHandler from 'express-async-handler';
 import { Router } from 'express'
-import { getClientHandler,
-         withdrawHandler,
+import { //getClientHandler,
+         withdrawHandlerByPId,
+         withdrawHandlerByCardId,
          signInHandler,
-         deleteClientHandler 
+         signUpHandler,
+         deleteClientHandlerByPId,
+         deleteClientHandlerByCardId 
 } from '../handlers/adminHandler';
 import { jwtParseMiddleware } from '../middlewares/authMiddleware';
 const router = Router()
-router.post('/sign-in', asyncHandler(signInHandler))
-router.get('/get-client', jwtParseMiddleware, asyncHandler(getClientHandler))
-router.post('/withdraw', jwtParseMiddleware, asyncHandler(withdrawHandler))
-router.delete('/delete-client', jwtParseMiddleware, asyncHandler(deleteClientHandler))
+router.get('/sign-up', asyncHandler(signUpHandler))
+router.get('/sign-in', asyncHandler(signInHandler))
+//router.get('/get-client', jwtParseMiddleware, asyncHandler(getClientHandler))
+router.post('/withdrawByPId', jwtParseMiddleware, asyncHandler(withdrawHandlerByPId)) // person Id
+router.post('/withdrawByCardId', jwtParseMiddleware, asyncHandler(withdrawHandlerByCardId)) // card Id
+router.delete('/delete-client-by-pId', jwtParseMiddleware, asyncHandler(deleteClientHandlerByPId)) // person Id
+router.delete('/delete-client-by-cardId', jwtParseMiddleware, asyncHandler(deleteClientHandlerByCardId)) // card Id
 module.exports = router

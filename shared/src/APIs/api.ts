@@ -1,11 +1,20 @@
 import { Admin } from "../types/Admin";
-export interface SignRequest {
-    name : string;
-    cardId : string;
-    faceId : string;
+export interface SignRequest { // for client
+    name? : string;
+    cardId? : string;
+    personId? : string;
 }
 export interface SignResponse {
     message? : string;
+}
+export interface AdminSignUpRequest {
+    name : string;
+    email : string;
+    password : string;
+}
+export interface AdminSignUpResponse {
+    admin : Pick<Admin, '_id'>;
+    jwt : string; 
 }
 export interface AdminSignInRequest {
     login : string;
@@ -15,21 +24,33 @@ export interface AdminSignInResponse {
     admin : Pick<Admin, '_id'>;
     jwt : string; 
 }
-export interface WithdrawRequest {
-    faceId : string;
-    fees : string;
+export interface WithdrawRequestByPId {
+    personId : string;
+    fees : number;
 }
-export interface WithdrawResponse {
+export interface WithdrawResponseByPId {
     message? : string;
 }
-export interface SignOutRequest {
-    clientId : string;
+export interface WithdrawRequestByCardId {
+    cardId : string;
+    fees : number;
 }
-export interface SignOutResponse {
+export interface WithdrawResponseByCardId {
     message? : string;
 }
-
-export interface ResetPasswordRequest {
+export interface SignOutRequestByPId {
+    personId : string;
+}
+export interface SignOutResponseByPId {
+    message? : string;
+}
+export interface SignOutRequestByCardId {
+    cardId : string;
+}
+export interface SignOutResponseByCardId {
+    message? : string;
+}
+export interface ResetPasswordRequest { // for admin
     newPassword : string;
 }
 export interface ResetPasswordResponse {
